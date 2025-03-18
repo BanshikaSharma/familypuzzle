@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>3D Rotating Dice with Uploadable Images</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #470e45, #be7aac, #3d0a3d);
+            animation: gradientAnimation 15s ease infinite;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: 100% 100%;
+            background-image: url(image1.png);
+        }
+
+        .dice {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s ease-out;
+        }
+
+        .face {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: white;
+            border: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        .face img {
+            width: 180px;
+            height: 180px;
+            border-radius: 10px;
+        }
+
+        .front  { transform: translateZ(100px); }
+        .back   { transform: rotateY(180deg) translateZ(100px); }
+        .right  { transform: rotateY(90deg) translateZ(100px); }
+        .left   { transform: rotateY(-90deg) translateZ(100px); }
+        .top    { transform: rotateX(90deg) translateZ(100px); }
+        .bottom { transform: rotateX(-90deg) translateZ(100px); }
+
+        @keyframes rotate {
+            from { transform: rotateX(0deg) rotateY(0deg); }
+            to { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        .rotating {
+            animation: rotate 1s infinite linear;
+        }
+
+        .stand-on-edge {
+            transform: rotateX(45deg) rotateY(45deg) rotateZ(45deg);
+        }
+
+        .letter-open {
+            animation: openLetter 1s forwards;
+        }
+
+        @keyframes openLetter {
+            0% { transform: scale(1) rotateX(0deg); }
+            100% { transform: scale(1.5) rotateX(180deg); }
+        }
+
+        @keyframes dance {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(10deg); }
+        }
+
+        .dancing-text {
+            display: inline-block;
+            animation: dance 1s infinite;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            color: #ffffff;
+            font-size: 2rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #000;
+            padding: 20px;
+            z-index: 1000;
+            display: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-image: url(image2.png);
+        }
+
+        .popup.active {
+            display: block;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .social-icons a i {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen">
+    <div class="absolute top-8 flex items-center space-x-2">
+        <label class="dancing-text">
+            Family Puzzle
+        </label>
+        <i class="fas fa-puzzle-piece text-white"></i>
+    </div>
+    <div class="dice stand-on-edge mt-16 mb-16" id="dice" title="Click to roll the dice, double-click to get a task">
+        <div class="face front" id="face-front">
+            <img alt="Placeholder image of a human face on the front side of the dice" id="img-front" src="https://storage.googleapis.com/a1aa/image/6n1bxZJfZT1QYZKa9bCVJU6CR55NzxEaXEVk9oyZcrM.jpg" />
+        </div>
+        <div class="face back" id="face-back">
+            <img alt="Placeholder image of a human face on the back side of the dice" id="img-back" src="https://storage.googleapis.com/a1aa/image/UySU2Xl_6MYx81PmPrmMeGHsfJ0LWW26hdGwajEIY-M.jpg" />
+        </div>
+        <div class="face right" id="face-right">
+            <img alt="Placeholder image of a human face on the right side of the dice" id="img-right" src="https://storage.googleapis.com/a1aa/image/KtLzHIIJuYC4GwCxF9D2kubbagd7brLD9jwl3MdHaA0.jpg" />
+        </div>
+        <div class="face left" id="face-left">
+            <img alt="Placeholder image of a human face on the left side of the dice" id="img-left" src="https://storage.googleapis.com/a1aa/image/7kzT8upOKrHEebLXnfeTu4sJeQM2IRC1H4w95r5E_58.jpg" />
+        </div>
+        <div class="face top" id="face-top">
+            <img alt="Placeholder image of a human face on the top side of the dice" id="img-top" src="https://storage.googleapis.com/a1aa/image/VUBrZaQkw2Slc8cRXARuRMbMSptOi-198VjP49G1gc8.jpg" />
+        </div>
+        <div class="face bottom" id="face-bottom">
+            <img alt="Placeholder image of a human face on the bottom side of the dice" id="img-bottom" src="https://storage.googleapis.com/a1aa/image/X4M6IZ55mGbt_gkbK839bIA4dAuyP-iBa1TGP4KCxiw.jpg" />
+        </div>
+    </div>
+    <div class="absolute bottom-0 left-0 flex items-center space-x-2 mb-4 ml-4">
+        <label class="block text-lg font-medium text-white" for="upload-images">
+            Upload(images)
+        </label>
+        <i class="fas fa-upload text-2xl text-gray-700 cursor-pointer" id="choose-icon" title="Click to upload images"></i>
+        <i class="fas fa-redo-alt text-2xl text-gray-700 cursor-pointer" id="restart-icon" title="Click to reset images"></i>
+    </div>
+    <input accept="image/*" class="mt-1 block w-full hidden" id="upload-images" multiple type="file" />
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="popup">
+        <h2 class="text-xl font-bold mb-2">Task Assignment</h2>
+        <p id="task-text" class="mb-4"></p>
+        <div class="flex justify-between mt-4">
+            <button id="done-task" class="bg-green-500 text-white px-4 py-2 rounded" title="Click if you completed the task">✔</button>
+            <button id="not-done-task" class="bg-red-500 text-white px-4 py-2 rounded" title="Click if you did not complete the task">👎</button>
+        </div>
+        <button id="close-popup" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded" title="Close this popup">❌</button>
+    </div>
+    <div class="popup" id="result-popup">
+        <h2 id="result-title" class="text-xl font-bold mb-2"></h2>
+        <p id="result-text" class="mb-4"></p>
+        <button id="close-result-popup" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded" title="Close this popup">❌</button>
+    </div>
+    <div class="absolute bottom-4 right-4 text-white text-sm font-semibold italic flex flex-col items-center">
+        BanshikaSharma@2025
+        <div class="flex space-x-2 mt-2 social-icons">
+            <a href="https://www.instagram.com/__banshikasharma_?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" title="Follow us on Instagram">
+                <i class="fab fa-instagram text-2xl text-white"></i>
+            </a>
+            <a href="https://www.linkedin.com/in/banshika-sharma-0153b52a7/" target="_blank" title="Connect with us on LinkedIn">
+                <i class="fab fa-linkedin text-2xl text-white"></i>
+            </a>
+        </div>
+    </div>
+    <script>
+        const dice = document.getElementById('dice');
+        const imgFront = document.getElementById('img-front');
+        const imgBack = document.getElementById('img-back');
+        const imgRight = document.getElementById('img-right');
+        const imgLeft = document.getElementById('img-left');
+        const imgTop = document.getElementById('img-top');
+        const imgBottom = document.getElementById('img-bottom');
+        const uploadImages = document.getElementById('upload-images');
+        const chooseIcon = document.getElementById('choose-icon');
+        const restartIcon = document.getElementById('restart-icon');
+        const faces = {
+            'face-front': document.getElementById('face-front'),
+            'face-back': document.getElementById('face-back'),
+            'face-right': document.getElementById('face-right'),
+            'face-left': document.getElementById('face-left'),
+            'face-top': document.getElementById('face-top'),
+            'face-bottom': document.getElementById('face-bottom')
+        };
+        const overlay = document.getElementById('overlay');
+        const popup = document.getElementById('popup');
+        const taskText = document.getElementById('task-text');
+        const closePopup = document.getElementById('close-popup');
+        const doneTask = document.getElementById('done-task');
+        const notDoneTask = document.getElementById('not-done-task');
+        const resultPopup = document.getElementById('result-popup');
+        const resultTitle = document.getElementById('result-title');
+        const resultText = document.getElementById('result-text');
+        const closeResultPopup = document.getElementById('close-result-popup');
+
+        const tasks = {
+    'face-front': [
+        "Do 10 push-ups",
+        "Sing a song",
+        "Dance for 1 minute",
+        "Do 20 squats",
+        "Act like a monkey for 30 seconds",
+        "Tell a funny story",
+        "Do a cartwheel",
+        "Imitate your favorite cartoon character",
+        "Do 5 burpees",
+        "Balance on one leg for 30 seconds",
+        "Make a funny face and hold it for 10 seconds",
+        "Do a silly walk across the room",
+        "Pretend to be a robot for 30 seconds",
+        "Do 20 sit-ups",
+        "Spin around 5 times and then try to walk straight"
+    ],
+    'face-back': [
+        "Tell a joke",
+        "Do a funny face",
+        "Imitate an animal",
+        "Pretend to be a famous person for 1 minute",
+        "Do your best impression of a celebrity",
+        "Make a funny sound and have others guess what it is",
+        "Do a dance move from TikTok",
+        "Speak in a funny voice for the next 3 rounds",
+        "Act like a pirate for 1 minute",
+        "Do a handstand against a wall",
+        "Pretend to be a waiter and take an order",
+        "Do a silly dance for 30 seconds",
+        "Make a funny face and hold it for 10 seconds",
+        "Tell a knock-knock joke",
+        "Imitate a baby crying"
+    ],
+    'face-right': [
+        "Do 20 jumping jacks",
+        "Recite a poem",
+        "Draw a picture",
+        "Do 10 lunges",
+        "Pretend to be a superhero and strike a pose",
+        "Do 5 high knees",
+        "Act like a chicken for 30 seconds",
+        "Do a dance move from your favorite music video",
+        "Pretend to be a teacher and give a lesson",
+        "Do 10 mountain climbers",
+        "Make a funny face and hold it for 10 seconds",
+        "Do a silly walk across the room",
+        "Pretend to be a dog and bark",
+        "Do 10 sit-ups while telling a joke",
+        "Spin around 5 times and then try to walk straight",
+        "Do a funny impression of someone in the room"
+    ],
+    'face-left': [
+        "Do a cartwheel",
+        "Whistle a tune",
+        "Act like a superhero",
+        "Do 15 sit-ups",
+        "Pretend to be a famous athlete for 1 minute",
+        "Do 10 squats while counting in a funny voice",
+        "Make a funny sound and have others guess what it is",
+        "Do a silly dance for 30 seconds",
+        "Pretend to be a robot for 30 seconds",
+        "Do 5 burpees",
+        "Act like a cat for 1 minute",
+        "Do a handstand against a wall",
+        "Pretend to be a waiter and take an order",
+        "Do 10 jumping jacks while singing a song",
+        "Imitate a famous person for 1 minute",
+        "Do a funny walk for 30 seconds"
+    ],
+    'face-top': [
+        "Do a handstand",
+        "Make a paper airplane",
+        "Solve a riddle",
+        "Do 10 push-ups",
+        "Pretend to be a famous scientist for 1 minute",
+        "Do 15 squats",
+        "Act like a monkey for 30 seconds",
+        "Tell a funny story",
+        "Do 5 burpees",
+        "Balance on one leg for 30 seconds",
+        "Make a funny face and hold it for 10 seconds",
+        "Do a silly walk across the room",
+        "Pretend to be a robot for 30 seconds",
+        "Do 10 sit-ups",
+        "Spin around 5 times and then try to walk straight",
+        "Do a magic trick"
+    ],
+    'face-bottom': [
+        "Do a magic trick",
+        "Play a musical instrument",
+        "Tell a story",
+        "Do 10 jumping jacks",
+        "Pretend to be a famous musician for 1 minute",
+        "Do 15 lunges",
+        "Act like a superhero and strike a pose",
+        "Sing the chorus of your favorite song",
+        "Do 5 high knees",
+        "Act like a chicken for 30 seconds",
+        "Do a dance move from your favorite music video",
+        "Pretend to be a teacher and give a lesson",
+        "Do 10 mountain climbers",
+        "Make a funny face and hold it for 10 seconds",
+        "Do a silly walk across the room",
+        "Pretend to be a dog and bark"
+    ]
+};
+
+const punishments = [
+    "Do a silly dance for 30 seconds",
+    "Speak in a funny accent for the next 5 minutes",
+    "Wear a funny hat for the next round",
+    "Do 10 jumping jacks",
+    "Sing a nursery rhyme out loud",
+    "Do 5 push-ups while singing a song",
+    "Pretend to be a cat for 1 minute",
+    "Do a funny walk for the next 3 rounds",
+    "Imitate a famous person for 1 minute",
+    "Do 10 squats while counting in a funny voice",
+    "Act like a monkey for 30 seconds",
+    "Do a silly dance for 30 seconds",
+    "Pretend to be a robot for 30 seconds",
+    "Do 10 sit-ups while telling a joke",
+    "Spin around 5 times and then try to walk straight",
+    "Do a handstand against a wall for 10 seconds"
+];
+
+        let isRotating = false;
+        let currentFace = null;
+
+        dice.addEventListener('click', () => {
+            if (!isRotating) {
+                isRotating = true;
+                dice.classList.add('rotating');
+                setTimeout(() => {
+                    dice.classList.remove('rotating');
+                    const randomX = Math.floor(Math.random() * 4) * 90;
+                    const randomY = Math.floor(Math.random() * 4) * 90;
+                    dice.style.transform = `rotateX(${randomX}deg) rotateY(${randomY}deg)`;
+                    isRotating = false;
+
+                    // Determine which face is on top
+                    if (randomX % 360 === 0 && randomY % 360 === 0) {
+                        currentFace = 'face-top';
+                    } else if (randomX % 360 === 90 && randomY % 360 === 0) {
+                        currentFace = 'face-front';
+                    } else if (randomX % 360 === 180 && randomY % 360 === 0) {
+                        currentFace = 'face-bottom';
+                    } else if (randomX % 360 === 270 && randomY % 360 === 0) {
+                        currentFace = 'face-back';
+                    } else if (randomX % 360 === 0 && randomY % 360 === 90) {
+                        currentFace = 'face-right';
+                    } else if (randomX % 360 === 0 && randomY % 360 === 270) {
+                        currentFace = 'face-left';
+                    }
+                }, 1000); // Adjust the duration to match the animation duration
+            }
+        });
+
+        uploadImages.addEventListener('change', (event) => {
+            const files = event.target.files;
+            if (files.length === 6) {
+                imgFront.src = URL.createObjectURL(files[0]);
+                imgBack.src = URL.createObjectURL(files[1]);
+                imgRight.src = URL.createObjectURL(files[2]);
+                imgLeft.src = URL.createObjectURL(files[3]);
+                imgTop.src = URL.createObjectURL(files[4]);
+                imgBottom.src = URL.createObjectURL(files[5]);
+            } else {
+                alert('Please upload exactly 6 images.');
+            }
+        });
+
+        chooseIcon.addEventListener('click', () => {
+            uploadImages.click();
+        });
+
+        restartIcon.addEventListener('click', () => {
+            imgFront.src = "https://storage.googleapis.com/a1aa/image/6n1bxZJfZT1QYZKa9bCVJU6CR55NzxEaXEVk9oyZcrM.jpg";
+            imgBack.src = "https://storage.googleapis.com/a1aa/image/UySU2Xl_6MYx81PmPrmMeGHsfJ0LWW26hdGwajEIY-M.jpg";
+            imgRight.src = "https://storage.googleapis.com/a1aa/image/KtLzHIIJuYC4GwCxF9D2kubbagd7brLD9jwl3MdHaA0.jpg";
+            imgLeft.src = "https://storage.googleapis.com/a1aa/image/7kzT8upOKrHEebLXnfeTu4sJeQM2IRC1H4w95r5E_58.jpg";
+            imgTop.src = "https://storage.googleapis.com/a1aa/image/VUBrZaQkw2Slc8cRXARuRMbMSptOi-198VjP49G1gc8.jpg";
+            imgBottom.src = "https://storage.googleapis.com/a1aa/image/X4M6IZ55mGbt_gkbK839bIA4dAuyP-iBa1TGP4KCxiw.jpg";
+            dice.style.transform = 'rotateX(45deg) rotateY(45deg) rotateZ(45deg)';
+            dice.classList.remove('rotating');
+            currentFace = null;
+        });
+
+        dice.addEventListener('dblclick', () => {
+            if (currentFace) {
+                const faceTasks = tasks[currentFace];
+                const task = faceTasks[Math.floor(Math.random() * faceTasks.length)];
+                taskText.textContent = `Your task: ${task}`;
+                overlay.classList.add('active');
+                popup.classList.add('active');
+            }
+        });
+
+        doneTask.addEventListener('click', () => {
+            resultTitle.textContent = 'Congratulations!';
+            resultText.textContent = 'You did it!';
+            overlay.classList.add('active');
+            resultPopup.classList.add('active');
+        });
+
+        notDoneTask.addEventListener('click', () => {
+            const punishment = punishments[Math.floor(Math.random() * punishments.length)];
+            resultTitle.textContent = 'Punishment';
+            resultText.textContent = `Your punishment: ${punishment}`;
+            overlay.classList.add('active');
+            resultPopup.classList.add('active');
+        });
+
+        closePopup.addEventListener('click', () => {
+            overlay.classList.remove('active');
+            popup.classList.remove('active');
+        });
+
+        closeResultPopup.addEventListener('click', () => {
+            overlay.classList.remove('active');
+            resultPopup.classList.remove('active');
+            dice.click(); // Roll the dice again
+        });
+    </script>
+</body>
+</html>
